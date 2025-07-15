@@ -1,0 +1,10 @@
+name: Beauty
+filter_seen: True
+column_name:  
+  user_id: 'user_id'
+  item_id: 'item_id'
+  timestamp: 'timestamp'
+  relevance: 
+  # relevance: 'overall'
+
+pretrained_embeddings_path: data/embeddings/my_beauty_embs.npy

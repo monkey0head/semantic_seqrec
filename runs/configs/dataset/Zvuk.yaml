@@ -1,0 +1,10 @@
+name: Zvuk #name of the file
+filter_seen: False
+column_name:  
+  user_id: 'user_id'
+  item_id: 'track_id'
+  timestamp: 'datetime'
+  relevance: 
+  # relevance: 'overall'
+
+pretrained_embeddings_path: data/embeddings/my_zvuk_embs.npy

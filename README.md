@@ -64,9 +64,34 @@ The codes obtained from RQ-VAE could be used in generative recommendation model 
 
 ## Evaluation Setup
 
+### Datasets
+Start with Amazon Beauty dataset, it is small and popular in recsys research. Use any recsys datasets with content information which you want to try in addition.
 
+TO DO: add datasets' links
 
-Use popular top-K ranking metrics: Normalized Discounted Cumulative Gain (NDCG@K), Mean Reciprocal Rank (MRR@K) and HitRate (HR@K), with K = 5, 10, 20, 50, 100. 
+### Preprocessing
+- columns renaming
+- N-core or N-filter for items and sequences along with iterative
+- removal of consecutive interactions with the same item
+- label encoding of users and items, item labels starts with 1 to leave 0 as a padding value
+
+Do not forget to modify the pipeline to do the same labe encoding for items in iteractions and descriptions dataframes. 
+
+### Data splitting
+
+Use global temporal split, take last 10% of interactions into test subset and 10% of the remaining to the validation subset. Use the last holdout item as a target.  
+
+### Model
+SASRec model is a baseline recommendation architecture. GPT-2 is very architecturally similar and should have compatative performance. GPT-2 from HuggingFace provides different generation approaches (e.g., gready, beam search) which you can try for generative retriveal with Semantic IDs.
+
+### Metrics
+Use popular top-K ranking metrics: Normalized Discounted Cumulative Gain (NDCG@K), 
+Mean Reciprocal Rank (MRR@K) and HitRate (HR@K), with K = 5, 10, 20, 50, 100. 
+
+For Semantic IDs you need to evalueate performance on real item ids, but may evaluate performance on each of predicted Semantic IDs. You may, for example, successfully predict the first Semantic ID of an item, and it is also good.
+
+### Pipeline
+Proposed pipeline works for model based on collaborative information only. Pay attention and modify the pipeline to properly preprocess items' description on all pipeline steps. 
 
 ## Tools & Libraries
 See requirements: `requirements.txt`
@@ -131,16 +156,6 @@ bash runs/run_sh/train_model.sh
 
 Config [train.yaml](runs/configs/train.yaml) 
 combines all configurations required for model training and evaluation.
-
-**Training of RQ-VAE and saving learned Semantic IDs as .pkl**:
-```bash
-# train RQ-VAE
-bash runs/run_sh/train_rqvae.sh
-
-# save trained Semantic IDs as .pkl 
-bash runs/run_sh/tokenize_rqvae.sh
-```
-There are no config for RQ-VAE scripts but you can see available options in [main.py](RQ-VAE/main.py) and [generate_indices.py](RQ-VAE/generate_indices.py) respectively. This RQ-VAE implementation is based on [repository for LETTER paper](https://github.com/HonghuiBao2000/LETTER/tree/master/RQ-VAE), but was modified to more closely resemble vanilla RQ-VAE.
 
 
 ## License

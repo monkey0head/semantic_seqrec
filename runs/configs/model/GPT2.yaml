@@ -1,0 +1,19 @@
+model_class: 'GPT-2'
+
+model_params:
+  n_positions: ${dataset_params.max_length}
+  n_embd: 64 
+  n_layer: 2
+  n_head: 1
+  # resid_pdrop: 0.0    
+  # attn_pdrop: 0.0     
+  # embd_pdrop: 0.0 
+
+generation: True
+mode: 'reciprocal_rank_aggregation'
+generation_params:
+  num_return_sequences: 1
+  # no_repeat_ngram_size: 1
+  do_sample: False
+  # temperature: 0.05
+  # num_beams: 10
