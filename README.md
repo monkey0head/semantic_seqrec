@@ -67,7 +67,13 @@ The codes obtained from RQ-VAE could be used in generative recommendation model 
 ### Datasets
 Start with Amazon Beauty dataset, it is small and popular in recsys research. Use any recsys datasets with content information which you want to try in addition.
 
-TO DO: add datasets' links
+The [Amazon Beauty Dataset](https://snap.stanford.edu/data/amazon/productGraph/categoryFiles/reviews_Beauty_5.json.gz) is a widely used dataset that includes customer reviews and ratings for various beauty products on Amazon. It contains information such as reviewer ID, item ID (ASIN), review text, and product rating. For your experiments, it is recommended to use the subset of reviews with ratings higher than 3 (as  a sign of positive interaction).
+
+To generate Semantic IDs, you can utilize the item's metadata provided [here](https://snap.stanford.edu/data/amazon/productGraph/categoryFiles/meta_Beauty.json.gz). (Note: Use the item name and description, not the reviews). 
+
+Also, you can find other Amazon datasets for your experiments [here](https://cseweb.ucsd.edu/~jmcauley/datasets/amazon/links.html).
+
+Another dataset you may use is Zvuk dataset, which contains user listenings of music tracks from the Zvuk streaming service. You can find user interactions and item metadata [here](https://www.kaggle.com/datasets/alexxl/zvuk-dataset).
 
 ### Preprocessing
 - columns renaming
