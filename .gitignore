@@ -9,7 +9,7 @@ lightning_logs/
 *.pkl
 *.json
 *.pt
-*.png
+# *.png
 notebooks/trials/
 outputs/
 multirun/
