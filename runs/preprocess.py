@@ -78,12 +78,13 @@ def preprocess(
         if item_desc is None:
             data = encode(data=data, col_name="item_id", shift=1)
         else:
-            data, item_desc, _ = encode_with_desc(interactions=data, desc=item_desc, col_name="item_id", shift=1)
+            data, item_desc, unk_id = encode_with_desc(interactions=data, desc=item_desc, col_name="item_id", shift=1)
 
     if path_to_save is not None:
         data.to_csv(path_to_save, index=False)
         if item_desc is not None:
-            item_desc.to_csv(os.path.join(path_to_save.replace(".csv", "_desc.csv")), index=False)
+            item_desc.to_csv(os.path.join(path_to_save.replace(".csv", "_desc_all.csv")), index=False)
+            item_desc[item_desc["item_id"] < unk_id].to_csv(os.path.join(path_to_save.replace(".csv", "_desc_warm.csv")), index=False)
 
     return data
 
@@ -101,7 +102,6 @@ def main(config):
     desc_path = os.path.join(data_path, "raw", f"meta_{config.dataset.name}.{data_format}")
     if os.path.exists(desc_path):
         desc = pd.read_csv(desc_path)
-        print(desc.head(5))
     else:
         desc = None
 
