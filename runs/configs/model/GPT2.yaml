@@ -14,7 +14,7 @@ generation: True
 mode: 'reciprocal_rank_aggregation'
 generation_params:
   num_return_sequences: 1
-  # no_repeat_ngram_size: 1
+  no_repeat_ngram_size: 1
   do_sample: False
   # temperature: 0.05
   # num_beams: 10

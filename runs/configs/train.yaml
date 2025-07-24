@@ -3,8 +3,8 @@ random_state: 101
 
 defaults:
   - _self_
-  - dataset: Zvuk
-  - model: SASRec
+  - dataset: Beauty
+  - model: SASRec # GPT-2
 
 clearml_project_folder: null  # seq_splits
 clearml_task_name: null  # train
@@ -15,7 +15,7 @@ pretrained_embeddings:
   freeze: False
 
 use_semantic_ids: False
-semantic_ids_map_path: data/SemanticID/Zvuk_epoch1000.pkl
+semantic_ids_map_path: data/SemanticID/PATH.pkl
 
 split_type: global_timesplit  # global_timesplit, leave-one-out
 split_subtype: val_by_time # if global_timesplit: val_by_user, val_last_train_item, val_by_time
