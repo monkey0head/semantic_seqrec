@@ -18,8 +18,8 @@ def calculate_sequence_stats(lengths, prefix=''):
 
 
 def get_time_period_days(max_timestamp, min_timestamp):
-    print(max_timestamp, min_timestamp)
-    print(type(max_timestamp), type(min_timestamp))
+    # print(max_timestamp, min_timestamp)
+    # print(type(max_timestamp), type(min_timestamp))
     return (max_timestamp - min_timestamp) / (60 * 60 * 24) #Bug???
 
 def dataset_stats(

@@ -13,12 +13,13 @@ from omegaconf import OmegaConf, open_dict
 import pandas as pd
 
 from src.preprocess.filters import core_filter
-from src.preprocess.indexes import encode
+from src.preprocess.indexes import encode, encode_with_desc
 from src.preprocess.utils import dataset_stats, rename_cols
 
 
 def preprocess(
     data,
+    item_desc = None,
     item_min_count=5,
     seq_min_len=5,
     core=True,
@@ -73,12 +74,16 @@ def preprocess(
         raise NotImplementedError("N-core filtering is only one available")
 
     if encoding:
-        # TO DO: update encoding to apply to both dataframes, features and interactions
         data = encode(data=data, col_name="user_id", shift=0)
-        data = encode(data=data, col_name="item_id", shift=1)
+        if item_desc is None:
+            data = encode(data=data, col_name="item_id", shift=1)
+        else:
+            data, item_desc, _ = encode_with_desc(interactions=data, desc=item_desc, col_name="item_id", shift=1)
 
     if path_to_save is not None:
         data.to_csv(path_to_save, index=False)
+        if item_desc is not None:
+            item_desc.to_csv(os.path.join(path_to_save.replace(".csv", "_desc.csv")), index=False)
 
     return data
 
@@ -93,11 +98,19 @@ def main(config):
         # parse_dates=[config.dataset.column_name.timestamp] # my addition
     )
 
+    desc_path = os.path.join(data_path, "raw", f"meta_{config.dataset.name}.{data_format}")
+    if os.path.exists(desc_path):
+        desc = pd.read_csv(desc_path)
+        print(desc.head(5))
+    else:
+        desc = None
+
     with open_dict(config):
         save_to_disk = config.prep_params.pop("save_to_disk")
 
     preprocess(
         data=data,
+        item_desc=desc,
         **config.prep_params,
         **config.dataset.column_name,
         path_to_save=os.path.join(
