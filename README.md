@@ -131,22 +131,28 @@ Data folder structure:
 - Data after preprocessing will be placed in the `preprocessed` subdirectory.
 - Data after splitting will be placed in the `splitted` subdirectory.
 
+**Download the data**
+```bash
+cd ./data
+wget https://snap.stanford.edu/data/amazon/productGraph/categoryFiles/reviews_Beauty_5.json.gz
+wget https://snap.stanford.edu/data/amazon/productGraph/categoryFiles/meta_Beauty.json.gz
+```
+
+
+**Convert the data**
+Run `semantic_seqrec/notebooks/parse_beauty_meta.ipynb` to save the data as .csv and rename columns.
+
+
 **To run dataset preprocessing for a specific dataset, use**:
 ```bash
 # specific dataset
 python runs/preprocess.py +dataset=Beauty
-
-# or use bash script
-bash runs/run_sh/preprocess.sh
 ```
 
 **Split the selected dataset into training, validation, and test subsets**:
 
 ```bash
 python runs/split.py split_type=global_timesplit split_params.quantile=0.9 split_params.validation_type=by_time dataset=Beauty
-
-# or use bash script
-bash runs/run_sh/split.sh
 ```
 
 Data after splitting will be placed in the `splitted` subdirectory.
@@ -163,7 +169,5 @@ bash runs/run_sh/train_model.sh
 Config [train.yaml](runs/configs/train.yaml) 
 combines all configurations required for model training and evaluation.
 
-
-## License
-
-MIT License
+**Dive into dataloaders and generation with GPT-2**
+Run `semantic_seqrec/notebooks/training_deep_dive.ipynb`  step-by-step.
