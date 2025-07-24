@@ -30,7 +30,7 @@ dataloader:
   batch_size: 64
   test_batch_size: 64
   num_workers: 8
-  validation_size: 64  # ?
+  validation_size: 2048  # ?
 
 seqrec_module:
   lr: 0.001
@@ -41,7 +41,7 @@ trainer_params:
   max_epochs: 300
   accelerator: gpu
 patience: 20
-load_if_possible: True
+load_if_possible: False
 
 evaluator:
   successive_val: False 
