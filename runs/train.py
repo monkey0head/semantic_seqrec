@@ -116,6 +116,7 @@ def prepare_data(config):
         with open(config.semantic_ids_map_path, 'rb') as f:
             index2semid = pickle.load(f)
 
+        assert len(index2semid[0]) == config.semantic_ids_len, f"Semantic IDs length mismatch: {len(index2semid[0])} != {config.semantic_ids_len}"
         train.item_id = train.item_id.map(index2semid)
         validation.item_id = validation.item_id.map(index2semid)
         test.item_id = test.item_id.map(index2semid)
@@ -164,8 +165,11 @@ def create_dataloaders(train, validation, config):
         validation_users = np.random.choice(validation_users, size=validation_size, replace=False)
         validation = validation[validation.user_id.isin(validation_users)]
 
-    train_dataset = CausalLMDataset(train, **config['dataset_params'], shift_labels=shift_labels)
-    eval_dataset = CausalLMPredictionDataset(validation, max_length=config.dataset_params.max_length, validation_mode=True)
+    semantic_ids_len = config.semantic_ids_len if config.use_semantic_ids else 1
+    max_length = config.dataset_params.max_length * semantic_ids_len
+    
+    train_dataset = CausalLMDataset(train, max_length=max_length, semantic_ids_len=semantic_ids_len, shift_labels=shift_labels)
+    eval_dataset = CausalLMPredictionDataset(validation, max_length=max_length, semantic_ids_len=semantic_ids_len, validation_mode=True)
 
     train_loader = DataLoader(train_dataset, batch_size=config.dataloader.batch_size,
                               shuffle=True, num_workers=config.dataloader.num_workers,
@@ -345,11 +349,13 @@ def training(model, train_loader, eval_loader, config, task=None, retrain=False)
 
 
 def predict(trainer, seqrec_module, data, config, global_timepoint):
+    semantic_ids_len = config.semantic_ids_len if config.use_semantic_ids else 1
 
     if config.model.model_class == 'GPT-2':
         if config.model.generation:
             predict_dataset = CausalLMPredictionDataset(
-                data, max_length=config.dataset_params.max_length - max(config.evaluator.top_k))
+                data, max_length=(config.dataset_params.max_length - max(config.evaluator.top_k)) * semantic_ids_len,
+                semantic_ids_len=semantic_ids_len)
             
             predict_loader = DataLoader(
                     predict_dataset, shuffle=False,
@@ -360,7 +366,9 @@ def predict(trainer, seqrec_module, data, config, global_timepoint):
             seqrec_module.set_predict_mode(generate=True, mode=config.model.mode, **config.model.generation_params)
 
         else:
-            predict_dataset = CausalLMPredictionDataset(data, max_length=config.dataset_params.max_length)
+            predict_dataset = CausalLMPredictionDataset(data, 
+                                                        max_length=config.dataset_params.max_length  * semantic_ids_len,
+                                                        semantic_ids_len=semantic_ids_len)
 
             predict_loader = DataLoader(
                     predict_dataset, shuffle=False,
@@ -371,6 +379,8 @@ def predict(trainer, seqrec_module, data, config, global_timepoint):
             seqrec_module.set_predict_mode(generate=False)
 
     elif config.model.model_class == 'SASRec':
+        if config.use_semantic_ids:
+            raise NotImplementedError("Semantic IDs are not supported for SASRec")
         predict_dataset = CausalLMPredictionDataset(data, max_length=config.dataset_params.max_length)
 
         predict_loader = DataLoader(

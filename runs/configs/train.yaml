@@ -16,6 +16,7 @@ pretrained_embeddings:
 
 use_semantic_ids: False
 semantic_ids_map_path: data/SemanticID/PATH.pkl
+semantic_ids_len: 4 # 1 for item = token
 
 split_type: global_timesplit  # global_timesplit, leave-one-out
 split_subtype: val_by_time # if global_timesplit: val_by_user, val_last_train_item, val_by_time
@@ -52,7 +53,7 @@ evaluator:
   calc_successive_metrics_test_retrained: ${evaluator.calc_successive_metrics_test}
   successive_replay_metrics: False
   metrics: ['NDCG', 'HitRate', 'MRR', 'Coverage']
-  top_k: [1, 5, 10, 20, 50, 100]
+  top_k: [5, 10, 20]
 
 retrain_with_validation: False
 save_val_last_predictions: False

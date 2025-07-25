@@ -46,7 +46,7 @@ class LMDataset(Dataset):
 
 class CausalLMDataset(LMDataset):
 
-    def __init__(self, df, max_length=128,
+    def __init__(self, df, max_length=128, semantic_ids_len=1
                  shift_labels=True, num_negatives=None,
                  full_negative_sampling=False,
                  user_col='user_id', item_col='item_id',
@@ -79,7 +79,8 @@ class CausalLMDataset(LMDataset):
 
 class CausalLMPredictionDataset(LMDataset):
 
-    def __init__(self, df, max_length=128, validation_mode=False,
+    def __init__(self, df, max_length=128, 
+                 semantic_ids_len=1, validation_mode=False,
                  user_col='user_id', item_col='item_id',
                  time_col='timestamp'):
 
@@ -87,6 +88,7 @@ class CausalLMPredictionDataset(LMDataset):
                          user_col=user_col, item_col=item_col, time_col=time_col)
 
         self.validation_mode = validation_mode
+        self.semantic_ids_len = semantic_ids_len
 
     def __getitem__(self, idx):
 
@@ -94,9 +96,9 @@ class CausalLMPredictionDataset(LMDataset):
         item_sequence = self.data[user_id]
 
         if self.validation_mode:
-            target = item_sequence[-1]
-            input_ids = item_sequence[-self.max_length-1:-1]
-            item_sequence = item_sequence[:-1]
+            target = item_sequence[-self.semantic_ids_len:]
+            input_ids = item_sequence[-self.max_length-self.semantic_ids_len:-self.semantic_ids_len]
+            item_sequence = item_sequence[:-self.semantic_ids_len]
 
             return {'input_ids': input_ids, 'user_id': user_id,
                     'seen_ids': item_sequence, 'target': target}
