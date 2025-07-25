@@ -61,7 +61,7 @@ def train(
     log_metrics_every=10000,
     dataset_split="beauty",
     disable_compilation=False,  # Add this parameter
-    early_stopping_patience = 80,  # Number of eval cycles to wait before early stopping
+    early_stopping_patience = 15,  # Number of eval cycles to wait before early stopping
     early_stopping_min_delta=1e-4,  # Minimum improvement required
     early_stopping_monitor='eval_total_loss',  # Metric to monitor for early stopping
 ):
