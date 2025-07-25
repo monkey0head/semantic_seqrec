@@ -10,10 +10,10 @@ model_params:
   attn_pdrop: ${model.pdrop} 
   
 
-generation: True
-mode: 'reciprocal_rank_aggregation'
+generation: ${use_semantic_ids}
+mode: 'greedy'
 generation_params:
-  num_return_sequences: 1
+  # num_return_sequences: 1
   # no_repeat_ngram_size: 1
   do_sample: False
   # temperature: 0.05

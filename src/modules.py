@@ -131,7 +131,9 @@ class SeqRecHuggingface(SeqRecBase):
 
     def set_predict_mode(self,
                          generate=False,
-                         mode='reciprocal_rank_aggregation',
+                         mode='greedy',
+                         N=4,
+                         inv_map=None,
                          **generate_kwargs):
         """
         Set `predict` options.
@@ -144,66 +146,64 @@ class SeqRecHuggingface(SeqRecBase):
         """
         self.mode = mode
         self.generate = generate
-        self.generate_params = {"early_stopping": False,
-                                'top_k': 0,
-                                'return_dict_in_generate': True,
-                                'output_scores': True
-                                } if (self.mode != 'reciprocal_rank_aggregation' and self.generate) else {"early_stopping": False}
+        self.inv_map = inv_map
+        self.N = N
+        self.generate_params = {"early_stopping": False}
 
         if generate and generate_kwargs is not None:
             self.generate_params.update(generate_kwargs)
 
-    def process_multiple_sequences(self, batch, preds, scores):
-        """
-        Combine multiple sequences generated for one user into one and leave top-k with maximal score.
-        Score of an item is calculated as a sum of scores of an item in each sequence.
-        """
-        num_seqs = self.generate_params["num_return_sequences"]
+    # def process_multiple_sequences(self, batch, preds, scores):
+    #     """
+    #     Combine multiple sequences generated for one user into one and leave top-k with maximal score.
+    #     Score of an item is calculated as a sum of scores of an item in each sequence.
+    #     """
+    #     num_seqs = self.generate_params["num_return_sequences"]
 
-        if self.mode == 'relevance_aggregation':
-            summed_scores = scores.reshape(batch['user_id'].shape[0], num_seqs, -1).sum(dim=1).sort(descending=True)
-            scores_batch = summed_scores[0][:, :self.predict_top_k].cpu()
-            preds_batch = summed_scores[1][:, :self.predict_top_k].cpu()
-        else:
-            preds_batch, scores_batch = [], []
-            for user_idx in range(batch['user_id'].shape[0]):
-                dicts = [dict(zip(preds[user_idx * num_seqs + i, :].detach().cpu().numpy(),
-                                  scores[user_idx * num_seqs + i, :].detach().cpu().numpy())) for i in range(num_seqs)]
-                combined_dict = dict(sum((Counter(d) for d in dicts), Counter()))
-                preds_one, scores_one = list(
-                    zip(*sorted(combined_dict.items(), key=lambda x: x[1], reverse=True)[:preds.shape[1]]))
-                preds_batch.append(preds_one)
-                scores_batch.append(scores_one)
+    #     if self.mode == 'relevance_aggregation':
+    #         summed_scores = scores.reshape(batch['user_id'].shape[0], num_seqs, -1).sum(dim=1).sort(descending=True)
+    #         scores_batch = summed_scores[0][:, :self.predict_top_k].cpu()
+    #         preds_batch = summed_scores[1][:, :self.predict_top_k].cpu()
+    #     else:
+    #         preds_batch, scores_batch = [], []
+    #         for user_idx in range(batch['user_id'].shape[0]):
+    #             dicts = [dict(zip(preds[user_idx * num_seqs + i, :].detach().cpu().numpy(),
+    #                               scores[user_idx * num_seqs + i, :].detach().cpu().numpy())) for i in range(num_seqs)]
+    #             combined_dict = dict(sum((Counter(d) for d in dicts), Counter()))
+    #             preds_one, scores_one = list(
+    #                 zip(*sorted(combined_dict.items(), key=lambda x: x[1], reverse=True)[:preds.shape[1]]))
+    #             preds_batch.append(preds_one)
+    #             scores_batch.append(scores_one)
 
-        return np.array(preds_batch), np.array(scores_batch)
+    #     return np.array(preds_batch), np.array(scores_batch)
 
     def predict_step(self, batch, batch_idx):
         user_ids = batch['user_id'].detach().cpu().numpy()
-
-        if not self.generate or \
-                ("num_return_sequences" not in self.generate_params
-                 or ((self.generate_params["num_return_sequences"] == 1) & (self.mode != 'relevance_aggregation'))):
-            if not self.generate:
-                preds, scores = self.make_prediction(batch)
-            else:
-                preds, scores = self.make_prediction_generate(batch)
-            scores = scores.detach().cpu().numpy()
-            preds = preds.detach().cpu().numpy()
-            return {'preds': preds, 'scores': scores, 'user_ids': user_ids}
-
-        # `generate` with num_return_sequences > 1
-        preds, scores = self.make_prediction_generate(batch)
-        preds, scores = self.process_multiple_sequences(batch, preds, scores)
-        return {'preds': preds, 'scores': scores, 'user_ids': user_ids}
-    
-    def validation_step(self, batch, batch_idx):
 
         if not self.generate:
             preds, scores = self.make_prediction(batch)
         else:
             preds, scores = self.make_prediction_generate(batch)
+        scores = scores.detach().cpu().numpy()
+        preds = preds.detach().cpu().numpy()
+        return {'preds': preds, 'scores': scores, 'user_ids': user_ids}
 
-        metrics = self.compute_val_metrics(batch['target'], preds)
+        # # `generate` with num_return_sequences > 1
+        # preds, scores = self.make_prediction_generate(batch)
+        # preds, scores = self.process_multiple_sequences(batch, preds, scores)
+        # return {'preds': preds, 'scores': scores, 'user_ids': user_ids}
+    
+    def validation_step(self, batch, batch_idx):
+
+        if not self.generate:
+            preds, scores = self.make_prediction(batch)
+            metrics = self.compute_val_metrics(batch['target'], preds)
+        else:
+            preds, scores = self.make_prediction_generate(batch)
+            
+            targets = batch['target'].detach().cpu().numpy()
+            targets = [self.inv_map.get(tuple(seq), 0) for seq in targets]
+            metrics = self.compute_val_metrics(targets, preds)
 
         self.log("val_ndcg", metrics['ndcg'], prog_bar=True)
         self.log("val_hit_rate", metrics['hit_rate'], prog_bar=True)
@@ -216,44 +216,50 @@ class SeqRecHuggingface(SeqRecBase):
         Input sequence may be cropped,
         maximum self.model.config.n_positions - self.predict_top_k last items are used as a sequence beginning.
         """
-        if self.mode == 'reciprocal_rank_aggregation':
-            seq = self.model.generate(
-                batch['input_ids'][:, - self.model.config.n_positions + self.predict_top_k:].to(self.model.device),
-                pad_token_id=self.padding_idx,
-                max_new_tokens=self.predict_top_k,
-                logits_processor=[FilterSeenProcessor()],
-                **self.generate_params
-            )
-            preds = seq[:, -self.predict_top_k:]
+        B = batch['input_ids'].size(0)
+        K = self.predict_top_k
+        N = self.N
 
-            scores_one = torch.pow(
-                torch.arange(
-                    self.predict_top_k,
-                    dtype=torch.long,
-                    device=self.model.device
-                ) + 1., -1
-            ).reshape(1, -1)
-            scores = torch.tile(scores_one, [preds.shape[0], 1])
+        if self.mode == 'greedy':
+            max_new_tokens = N * K
+            # гриди: do_sample=False, num_beams=None, num_return_sequences=1
+            params = dict(self.generate_params)
+            params["do_sample"] = False
+            params["max_new_tokens"] = max_new_tokens
 
-        else:
             seq = self.model.generate(
-                batch['input_ids'][:, -self.model.config.n_positions + self.predict_top_k:].to(self.model.device),
+                batch['input_ids'][:, -self.model.config.n_positions + max_new_tokens:].to(self.model.device),
                 pad_token_id=self.padding_idx,
-                max_new_tokens=self.predict_top_k,
-                **self.generate_params
+                **params
             )
 
-            preds = None
+            cont = seq[:, -max_new_tokens:].view(B, K, N)  # (B, N*K)
 
-            if 'temperature' in self.generate_params.keys():
-                temp = self.generate_params['temperature']
-                scores = torch.nn.functional.softmax(torch.stack(list(seq.scores), dim=0) / temp, dim=-1).sum(dim=0)
-            else:
-                scores = torch.nn.functional.softmax(torch.stack(list(seq.scores), dim=0), dim=-1).sum(dim=0)
+        elif self.mode == 'beamsearch':
+            params = dict(self.generate_params)
+            params["do_sample"] = False
+            params["num_beams"] = K
+            params["num_return_sequences"] = K
+            params["max_new_tokens"] = N
+            seq = self.model.generate(
+                batch['input_ids'][:, -self.model.config.n_positions + N:].to(self.model.device),
+                pad_token_id=self.padding_idx,
+                **params
+            )
 
-            scores = scores.scatter_(1, batch['full_history'].repeat_interleave(self.generate_params["num_return_sequences"], dim=0).to(self.model.device), -torch.inf)
+            cont = seq[:, -N:] # (B*K, N)
         
-        # print(preds)
+        cont = cont.view(B, K, N) #  -> (B, K, N)
+
+        cont_flat = cont.reshape(-1, N).tolist()
+        preds_flat = [self.inv_map.get(tuple(seq), 0) for seq in cont_flat]
+        preds = (torch.tensor(preds_flat, dtype=torch.long).view(B, K))  #  -> (B, K)
+
+        mask = preds != 0
+        print(mask.sum().item() / mask.numel())
+
+        scores = torch.arange(K-1, -1, -1)   # [K-1, ... 0]
+        scores = scores.unsqueeze(0).expand(B, -1)
 
         return preds, scores
 
