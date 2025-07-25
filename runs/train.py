@@ -180,7 +180,7 @@ def create_dataloaders(train, validation, config):
         # eval_dataset = CausalLMPredictionDataset(validation, max_length=max_length, semantic_ids_len=semantic_ids_len, validation_mode=True)
 
         eval_dataset = CausalLMPredictionDataset(
-            validation, max_length=(config.dataset_params.max_length - max(config.evaluator.top_k)) * semantic_ids_len,
+            validation, max_length=(config.dataset_params.max_length - config.seqrec_module.predict_top_k) * semantic_ids_len,
             semantic_ids_len=semantic_ids_len, validation_mode=True)
         
         eval_loader = DataLoader(
