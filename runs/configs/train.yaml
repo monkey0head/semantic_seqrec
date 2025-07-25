@@ -39,9 +39,9 @@ seqrec_module:
   filter_seen: False
 
 trainer_params:
-  max_epochs: 300
+  max_epochs: 5000
   accelerator: gpu
-patience: 20
+patience: 200
 load_if_possible: False
 
 evaluator:

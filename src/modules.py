@@ -81,7 +81,7 @@ class SeqRecBase(pl.LightningModule):
         for i, pred in enumerate(preds):
             if torch.isin(targets[i], pred).item():
                 hit_rate += 1
-                rank = torch.where(pred == targets[i])[0].item() + 1
+                rank = torch.where(pred == targets[i])[0][0].item() + 1 ## [0] добавил, т к ругалось на одинаковые айтемы в pred
                 ndcg += 1 / np.log2(rank + 1)
                 mrr += 1 / rank
 
