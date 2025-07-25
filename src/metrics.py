@@ -3,6 +3,7 @@ Metrics.
 """
 
 import inspect
+import numpy as np
 from replay import metrics as base_class
 from replay.metrics import OfflineMetrics
 
@@ -85,3 +86,23 @@ class Evaluator:
             item_column=self.item_col, rating_column=self.prediction_col)(recs, test, train)
 
         return metrics
+
+def get_metric_by_position(preds, targets):
+    """
+    preds: np.array, B users * K recs * semantic id length
+    targets: np.array, B users * semantic id length
+
+    returns: dict of np.arrays
+    - precision: B users * semantic id length
+    - hr: B users * semantic id length
+    """
+    targets = np.tile(targets[:, np.newaxis, :], (1, preds.shape[1], 1))
+    hits = preds == targets
+    # for each user for each semantic id position
+    hits_by_user = hits.sum(axis=1)
+    hits_by_user
+    metrics = {
+        "precision": (hits_by_user.mean(axis=0) / preds.shape[0]).round(4),
+        "hit_rate": (hits_by_user > 0).mean(axis=0).round(4)
+    }
+    return metrics
