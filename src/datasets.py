@@ -46,7 +46,7 @@ class LMDataset(Dataset):
 
 class CausalLMDataset(LMDataset):
 
-    def __init__(self, df, max_length=128, semantic_ids_len=1
+    def __init__(self, df, max_length=128, semantic_ids_len=1,
                  shift_labels=True, num_negatives=None,
                  full_negative_sampling=False,
                  user_col='user_id', item_col='item_id',
