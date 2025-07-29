@@ -96,6 +96,8 @@ def get_metric_by_position(preds, targets):
     - precision: B users * semantic id length
     - hr: B users * semantic id length
     """
+    preds = preds.detach().cpu().numpy()
+    targets = targets.detach().cpu().numpy()
     targets = np.tile(targets[:, np.newaxis, :], (1, preds.shape[1], 1))
     hits = preds == targets
     # for each user for each semantic id position

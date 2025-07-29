@@ -90,6 +90,15 @@ def fix_seeds(random_state):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
+def read_sids(path_):
+    with open(path_, 'rb') as f:
+        index2semid = pickle.load(f)
+        print(index2semid[1])
+        for key in index2semid.keys():
+            index2semid[key] = tuple(i + 1 for i in index2semid[key])
+        print(index2semid[1])
+    return index2semid
+
 def prepare_data(config):
     split_subtype = config.split_subtype or ''
     split_type = config.split_type
@@ -113,8 +122,7 @@ def prepare_data(config):
     print('test shape', test.shape)
 
     if config.use_semantic_ids and config.semantic_ids_map_path is not None:
-        with open(config.semantic_ids_map_path, 'rb') as f:
-            index2semid = pickle.load(f)
+        index2semid = read_sids(config.semantic_ids_map_path)
 
         assert len(list(index2semid.values())[0]) == config.semantic_ids_len, f"Semantic IDs length mismatch: {len(list(index2semid.values())[0])} != {config.semantic_ids_len}"
 
@@ -295,8 +303,7 @@ def training(model, train_loader, eval_loader, config, task=None, retrain=False)
     if config.model.model_class == 'GPT-2':
         seqrec_module = SeqRecHuggingface(model, **config['seqrec_module'])
         if config.model.generation:
-            with open(config.semantic_ids_map_path, 'rb') as f:
-                index2semid = pickle.load(f)
+            index2semid = read_sids(config.semantic_ids_map_path)
             inv_map = {tuple(sem_ids): item_id for item_id, sem_ids in index2semid.items()}
             seqrec_module.set_predict_mode(generate=True, mode=config.model.mode,
                                            N=config.semantic_ids_len,

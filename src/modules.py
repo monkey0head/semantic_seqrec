@@ -9,6 +9,8 @@ import pytorch_lightning as pl
 import torch
 from torch import nn
 from transformers.generation.logits_process import LogitsProcessor
+from .metrics import get_metric_by_position
+
 
 class SeqRecBase(pl.LightningModule):
 
@@ -250,6 +252,11 @@ class SeqRecHuggingface(SeqRecBase):
             cont = seq[:, -N:] # (B*K, N)
         
         cont = cont.view(B, K, N) #  -> (B, K, N)
+
+        metrics = get_metric_by_position(cont, batch['target'])
+        for i in range(N):
+            self.log(f"sid_precision_{i}", metrics['precision'][i], prog_bar=True)
+            self.log(f"sid_hit_rate_{i}", metrics['hit_rate'][i], prog_bar=True)
 
         cont_flat = cont.reshape(-1, N).tolist()
         preds_flat = [self.inv_map.get(tuple(seq), 0) for seq in cont_flat]
