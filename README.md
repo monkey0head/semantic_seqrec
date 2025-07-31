@@ -168,11 +168,11 @@ bash runs/run_sh/train_model.sh
 
 **Run rq_vae algorithm training and validation/test metrics computation**:
 ```bash
-python python rq_vae/train_rqvae.py rq_vae/configs/rqvae_amazon.gin 
+python rq_vae/train_rqvae.py rq_vae/configs/rqvae_amazon.gin 
 ``` 
 or 
 ```bash
-python python rq_vae/train_rqvae_early_stopping.py rq_vae/configs/rqvae_amazon.gin 
+python rq_vae/train_rqvae_early_stopping.py rq_vae/configs/rqvae_amazon.gin 
 ``` 
 
 Config [train.yaml](runs/configs/train.yaml) 
