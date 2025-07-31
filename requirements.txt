@@ -12,3 +12,9 @@ tqdm==4.67.1
 # visualization
 matplotlib==3.7.2
 streamlit==1.43.2
+
+# rq_vae
+gin-config==0.5.0
+accelerate==1.9.0
+torch_geometric==2.6.1
+sentence_transformers==5.0.0

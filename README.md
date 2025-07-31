@@ -166,8 +166,21 @@ python runs/train.py dataset=Beauty split_type=global_timesplit split_subtype=va
 bash runs/run_sh/train_model.sh
 ```
 
+**Run rq_vae algorithm training and validation/test metrics computation**:
+```bash
+python rq_vae/train_rqvae.py rq_vae/configs/rqvae_amazon.gin 
+``` 
+or 
+```bash
+python rq_vae/train_rqvae_early_stopping.py rq_vae/configs/rqvae_amazon.gin 
+``` 
+
 Config [train.yaml](runs/configs/train.yaml) 
 combines all configurations required for model training and evaluation.
+
+
+Config [rqvae_amazon.gin](rq_vae/configs/rqvae_amazon.gin) 
+combines all configurations required for rq_vae training and evaluation on Amazon Beauty dataset. 
 
 **Dive into dataloaders and generation with GPT-2**
 Run `semantic_seqrec/notebooks/training_deep_dive.ipynb`  step-by-step.
