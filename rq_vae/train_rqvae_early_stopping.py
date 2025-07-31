@@ -294,7 +294,7 @@ def train(
                         "p_unique_ids": eval_model_output.p_unique_ids.cpu().item()
                     }
                     all_val_metrics.append(val_metrics)
-                    
+
                     # Early stopping logic
                     current_val_loss = eval_losses[0]  # eval_total_loss
                     improvement = best_val_loss - current_val_loss
