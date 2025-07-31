@@ -31,9 +31,9 @@ def create_embeds(meta_unique, data_path):
 def process_amazon_data(data_path):
     data = HeteroData()
     print("Loading shared data...")
-    meta_df = pd.read_csv(data_path/'preprocessed'/'Beauty_desc_all.csv')
-    if os.path.exists(data_path/'embeddings'/'my_beauty_embs_all.npy'):
-        embeddings = np.load(data_path/'embeddings'/'my_beauty_embs_all.npy')
+    meta_df = pd.read_csv(data_path/'preprocessed'/'Beauty_desc_warm.csv')
+    if os.path.exists(data_path/'embeddings'/'my_beauty_embs.npy'):
+        embeddings = np.load(data_path/'embeddings'/'my_beauty_embs.npy')
     else:
         embeddings = create_embeds(meta_df, data_path)
     item_ids = meta_df['item_id'].values
